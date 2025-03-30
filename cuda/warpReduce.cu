@@ -5,7 +5,7 @@
 #include <vector>
 #include <random>
 #include <string>
-#define THREAD_PER_BLOCK 256
+
 static int checkCudaError(cudaError_t code, const char *expr, const char *file, int line)
 {
     if (code)
@@ -22,53 +22,53 @@ static int checkCudaError(cudaError_t code, const char *expr, const char *file, 
         int err = checkCudaError(__VA_ARGS__, #__VA_ARGS__, __FILE__, __LINE__);                                                                       \
     } while (0)
 
-// idle Threads
-__global__ void reduce2(float *d_in,float *d_out){
-    __shared__ float sdata[THREAD_PER_BLOCK];
+__device__ void warpReduce(volatile float* cache, unsigned int tid){
+    cache[tid]+=cache[tid+32];
+    // __syncthreads();
+    cache[tid]+=cache[tid+16]; // if(tid < 16)
+    // __syncthreads();
+    cache[tid]+=cache[tid+8];  // if(tid < 8)
+    // __syncthreads();
+    cache[tid]+=cache[tid+4];
+    // __syncthreads();
+    cache[tid]+=cache[tid+2];
+    // __syncthreads();
+    cache[tid]+=cache[tid+1];
+}
 
-    // each thread loads one element from global to shared mem
+__global__ void Reduce0(float *d_in,float *d_out) {
+    __shared__ float sdata[64];
     unsigned int tid = threadIdx.x;
-    unsigned int i = blockIdx.x*blockDim.x + threadIdx.x;
+    unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
+    sdata[tid] = d_in[i];
+    __syncthreads();
+    if(tid < 32) warpReduce(sdata,tid);
+    if(tid == 0) d_out[0] = sdata[0];
+}
+
+__global__ void Reduce1(float *d_in,float *d_out) {
+    __shared__ float sdata[64];
+    unsigned int tid = threadIdx.x;
+    unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
     sdata[tid] = d_in[i];
     __syncthreads();
 
-    // do reduction in shared mem
-    for (unsigned int s=blockDim.x/2; s>0; s>>=1) {
-        if (tid < s) {
-            sdata[tid] += sdata[tid + s];
-        }
-        __syncthreads();
+    if(tid < 32) {
+        sdata[tid]+=sdata[tid+32];
+        // __syncthreads();
+        sdata[tid]+=sdata[tid+16]; // if(tid < 16)
+        // __syncthreads();
+        sdata[tid]+=sdata[tid+8];  // if(tid < 8)
+        // __syncthreads();
+        sdata[tid]+=sdata[tid+4];
+        // __syncthreads();
+        sdata[tid]+=sdata[tid+2];
+        // __syncthreads();
+        sdata[tid]+=sdata[tid+1];
     }
-
-    // write result for this block to global mem
-    if (tid == 0) d_out[blockIdx.x] = sdata[0];
+    if(tid == 0) d_out[0] = sdata[0];
 }
 
-// bank conflict
-__global__ void reduce1(float *d_in,float *d_out){
-    __shared__ float sdata[THREAD_PER_BLOCK];
-
-    // each thread loads one element from global to shared mem
-    unsigned int tid = threadIdx.x;
-    unsigned int i = blockIdx.x*blockDim.x + threadIdx.x;
-    sdata[tid] = d_in[i];
-    __syncthreads();
-
-    // do reduction in shared mem
-    for(unsigned int s=1; s < blockDim.x; s *= 2) {
-        int index = 2 * s * tid;
-        if (index < blockDim.x) {
-            sdata[index] += sdata[index + s];
-        }
-        __syncthreads();
-    }
-
-    // write result for this block to global mem
-    if (tid == 0){
-        d_out[blockIdx.x] = sdata[0];
-    }
-
-}
 
 std::vector<float> generateRandomVector(int N) {
     std::vector<float> vec(N);
@@ -90,29 +90,32 @@ float reduce(float* h_a, int N) {
 }
 
 int main(int agrc, char **argv) {
-    int N = 32*1024*1024;
+    
+    int N = 64;
     std::vector<float> h_a = generateRandomVector(N);
-    float *d_a;
+    float *d_a = NULL;
     checkCudaErr(cudaMalloc((void **)&d_a, N*sizeof(float)));
     float cpu_result = reduce(h_a.data(),N);
-    std::vector<float> h_c(N/THREAD_PER_BLOCK);
-    float *d_c;
-    checkCudaErr(cudaMalloc((void **)&d_c,(N/THREAD_PER_BLOCK)*sizeof(float)));
+    float gpu_result = 0.0;
+    float *d_c = NULL;
+    std::vector<float> h_c(1);
+    checkCudaErr(cudaMalloc((void **)&d_c, 1*sizeof(float)));
     checkCudaErr(cudaMemcpy(d_a, h_a.data(), N*sizeof(float), cudaMemcpyHostToDevice));
-    dim3 Grid( N/THREAD_PER_BLOCK,1);
-    dim3 Block( THREAD_PER_BLOCK,1);
-    if(std::string(argv[1])== "reduce1") {
-        reduce1<<<Grid,Block>>>(d_a,d_c);
-    } else if(std::string(argv[1]) == "reduce2") {
-        reduce2<<<Grid,Block>>>(d_a,d_c);
-    }
+    
+    dim3 Grid(1, 1);
+    dim3 Block(64, 1);
+    if(std::string(argv[1])== "reduce0") Reduce0<<<Grid,Block>>>(d_a,d_c);
+    else if(std::string(argv[1])== "reduce1") Reduce1<<<Grid,Block>>>(d_a,d_c);
     checkCudaErr(cudaGetLastError());
     checkCudaErr(cudaDeviceSynchronize());
-    checkCudaErr(cudaMemcpy(h_c.data(), d_c, (N/THREAD_PER_BLOCK)*sizeof(float), cudaMemcpyDeviceToHost));
-    float gpu_result = reduce(h_c.data(),N/THREAD_PER_BLOCK);
+    checkCudaErr(cudaMemcpy(h_c.data(), d_c, 1*sizeof(float), cudaMemcpyDeviceToHost));
+    
+    gpu_result = h_c[0];
     std::cout<<"cpu result: "<<cpu_result<<std::endl;
     std::cout<<"gpu result: "<<gpu_result<<std::endl;
+    if(abs(gpu_result-cpu_result)/cpu_result > 1e-3) std::cout << "Gpu Result Error!!\n";
     cudaFree(d_a);
     cudaFree(d_c);
     return 0;
+
 }
