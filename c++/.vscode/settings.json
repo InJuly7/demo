@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "*.cu": "cuda",
+        "BUILD": "code-text-binary",
+        "iostream": "cpp",
+        "ostream": "cpp"
+    }
+}
