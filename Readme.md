@@ -293,7 +293,7 @@ double 3.14159 -> int 3
 
 ### Demo7 - 变量声明与定义示例
 
-```json
+```c++
 # 使用方法:
 g++ demo7_2.cpp demo7_1.cpp -o demo7 && ./demo7
 
