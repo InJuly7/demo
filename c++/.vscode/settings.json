@@ -3,6 +3,7 @@
         "*.cu": "cuda",
         "BUILD": "code-text-binary",
         "iostream": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "climits": "cpp"
     }
 }

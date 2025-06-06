@@ -7,7 +7,7 @@
 ```
 
 
-## Demo1 - 普通公共函数, 虚函数, 纯虚函数(抽象类), 综合对比示例
+### Demo1 - 普通公共函数, 虚函数, 纯虚函数(抽象类), 综合对比示例
 功能: 演示普通公共函数的静态绑定特性, 演示虚函数的多态特性和动态绑定, 演示纯虚函数定义抽象接口，强制子类实现
 ```bash
 # 使用方法: 
@@ -37,7 +37,7 @@ Rectangle area: 24
 ```
 
 
-## Demo2 - 虚函数表基本概念, 虚函数表内部结构, 多重继承的虚函数表, 虚函数表内存布局可视化
+### Demo2 - 虚函数表基本概念, 虚函数表内部结构, 多重继承的虚函数表, 虚函数表内存布局可视化
 功能: 演示虚函数表的存在和基本工作机制, 通过内存分析查看虚函数表指针和函数地址, 展示复杂继承关系下的虚函数表结构, 详细展示虚函数表在内存中的组织结构
 
 ```bash
@@ -198,4 +198,134 @@ Base2* p = (Base2*)((char*)&child + 16);
 ```bash
 # 使用方法:
 # 预期输出:
+```
+
+
+### Demo5 - 基本数据类型大小示例
+功能: 演示C++中各种基本数据类型的内存大小，理解不同类型占用的字节数
+
+```bash
+# 使用方法: 编译并运行程序
+g++ -o demo1 demo1.cpp && ./demo1
+
+# 预期输出 (在64位系统上):
+=== C++ 基本数据类型大小演示 ===
+
+--- 整型系列 ---
+int 大小: 4 字节
+short 大小: 2 字节
+long 大小: 8 字节
+long long 大小: 8 字节
+
+--- 字符型系列 ---
+char 大小: 1 字节
+signed char 大小: 1 字节
+unsigned char 大小: 1 字节
+
+--- 浮点型系列 ---
+float 大小: 4 字节
+double 大小: 8 字节
+long double 大小: 16 字节
+
+--- 其他类型 ---
+bool 大小: 1 字节
+
+--- 变量实例大小 ---
+变量 a(int) 大小: 4 字节
+变量 lla(long long) 大小: 8 字节
+变量 sa(short) 大小: 2 字节
+变量 sc(char) 大小: 1 字节
+变量 bt(bool) 大小: 1 字节
+
+```
+
+### Demo6 - 类型转换示例
+功能： 介绍 bool, int, float, double, signed char, unsigned char 之间的类型转换
+
+```bash
+# 使用方法: 
+g++ demo6.cpp -o demo6 && ./demo6
+
+
+# 预期输出: 
+=== C++ 类型转换示例 ===
+
+1. 非布尔类型 -> 布尔类型:
+int 0 -> bool: 0
+int 42 -> bool: 1
+int -5 -> bool: 1
+double 0.0 -> bool: 0
+double 3.14 -> bool: 1
+
+2. 布尔类型 -> 非布尔类型:
+true -> int: 1
+false -> int: 0
+true -> double: 1
+false -> double: 0
+
+3. 浮点数 -> 整数类型 (截断小数部分):
+double 3.14159 -> int: 3
+double -3.14159 -> int: -3
+float 9.99 -> int: 9
+
+4. 整数 -> 浮点类型:
+int 123456789 -> float: 1.23457e+08
+int 123456789 -> double: 1.23457e+08
+
+5. 无符号类型溢出 (取模运算):
+unsigned char = 255: 255
+unsigned char = 256: 0
+unsigned char = 257: 1
+unsigned char = -1: 255
+
+6. 带符号类型溢出 (未定义行为 - 结果可能不可预测):
+signed char 最大值: 127
+signed char 最小值: -128
+signed char = SCHAR_MAX: 127
+signed char = SCHAR_MAX + 1 (未定义): -128
+signed char = 200 (可能未定义): -56
+
+7. 显式类型转换 (强制转换):
+使用 static_cast<int> 显式转换:
+double 3.14159 -> int 3
+```
+
+
+### Demo7 - 变量声明与定义示例
+
+```json
+# 使用方法:
+g++ demo7_2.cpp demo7_1.cpp -o demo7 && ./demo7
+
+# 预期输出:
+
+  # variable_demo.cpp
+  Global: 100
+  Local: 50
+
+  # function_demo.cpp
+  5 + 3 = 8
+  Hello from declared function!
+  2.5 * 4.0 = 10
+  
+  
+  # class_demo.cpp
+  Hi, I'm Alice, 25 years old.
+  Updated age: 26
+
+  
+  # 头文件 demo
+  5! = 120
+  2^3 = 8
+  Calculator result: 20
+
+
+  # extern demo
+  Initial state:
+  Counter: 0
+  Message: Hello World
+  After incrementing:
+  Counter: 2
+  Message: Hello World
+  After direct modification: 7
 ```
