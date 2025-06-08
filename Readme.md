@@ -241,7 +241,6 @@ bool 大小: 1 字节
 
 ### Demo6 - 类型转换示例
 功能： 介绍 bool, int, float, double, signed char, unsigned char 之间的类型转换
-
 ```bash
 # 使用方法: 
 g++ demo6.cpp -o demo6 && ./demo6
@@ -291,9 +290,9 @@ double 3.14159 -> int 3
 ```
 
 
-### Demo7 - 变量声明与定义示例
-
-```c++
+### Demo7 - 各种情况声明与定义示例
+功能： 变量， 函数， 类， 头文件， 外部变量 声明与定义
+```js
 # 使用方法:
 g++ demo7_2.cpp demo7_1.cpp -o demo7 && ./demo7
 
@@ -329,3 +328,6 @@ g++ demo7_2.cpp demo7_1.cpp -o demo7 && ./demo7
   Message: Hello World
   After direct modification: 7
 ```
+
+
+### Demo8 - 指针与引用
